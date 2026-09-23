@@ -1,0 +1,51 @@
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      REDIS_URL: "redis://redis:6379"
+      DATABASE_URL: "postgresql://pulsemesh:pulsemesh@postgres:5432/pulsemesh"
+    depends_on:
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r=>{if(!r.ok)process.exit(1)})"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - pulsemesh-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: pulsemesh
+      POSTGRES_PASSWORD: pulsemesh
+      POSTGRES_DB: pulsemesh
+    volumes:
+      - pulsemesh-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulsemesh"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pulsemesh-redis:
+  pulsemesh-pg:
