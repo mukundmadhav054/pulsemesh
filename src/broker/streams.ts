@@ -134,12 +134,13 @@ export class InMemoryStreams {
    */
   xautoclaim(
     stream: string,
-    group: string,
+    _group: string,
     consumer: string,
     minIdleMs: number,
     count = 10,
   ): StreamRecord[] {
-    void group; // group scoping is tracked via ack sets; ownership is per-stream
+    // NOTE: group scoping lives in the ack sets; entry ownership is
+    // per-stream, so _group is intentionally unused here.
     const now = Date.now();
     const list = this.streams.get(stream) ?? [];
     const out: StreamRecord[] = [];
