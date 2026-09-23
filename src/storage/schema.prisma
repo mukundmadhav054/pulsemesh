@@ -1,0 +1,53 @@
+// PulseMesh persistence schema (Prisma-style, PostgreSQL).
+//
+// Time-series task events are range-partitioned by month on `occurredAt`.
+// See MIGRATIONS.md for the raw DDL used to create partitions.
+// Connection pooling: pgbouncer-style `connection_limit` + batch inserts
+// via `TaskEventBatchWriter` (src/storage/batch.ts).
+
+generator client {
+  provider = "postgresql"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskStatus {
+  ENQUEUED
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  DLQ
+}
+
+model TaskEvent {
+  id             String     @id @default(uuid())
+  idempotencyKey String     @map("idempotency_key")
+  partitionKey   String     @map("partition_key")
+  stream         String
+  entryId        String     @map("entry_id")
+  type           String
+  status         TaskStatus @default(ENQUEUED)
+  attempt        Int        @default(0)
+  error          String?
+  occurredAt     DateTime   @map("occurred_at") @default(now())
+  createdAt      DateTime   @map("created_at") @default(now())
+
+  @@unique([stream, entryId])
+  @@index([idempotencyKey])
+  @@index([partitionKey, occurredAt])
+  @@index([status, occurredAt])
+  @@map("task_events")
+}
+
+model TaskCheckpoint {
+  consumerGroup String   @map("consumer_group")
+  stream        String
+  lastEntryId   String   @map("last_entry_id")
+  updatedAt     DateTime @map("updated_at") @updatedAt
+
+  @@id([consumerGroup, stream])
+  @@map("task_checkpoints")
+}
