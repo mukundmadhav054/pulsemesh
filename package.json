@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Distributed background task engine: ingestion API, Redis Streams broker, idempotent worker pool, Postgres persistence, Prometheus telemetry.",
   "main": "dist/index.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "jest --runInBand",

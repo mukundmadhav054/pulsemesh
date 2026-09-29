@@ -1,0 +1,14 @@
+# Render Blueprint: PulseMesh task-queue API
+# Dashboard: New → Blueprint → select repo → Apply (service: pulsemesh).
+# Health endpoint is dependency-free (no Redis/Postgres required), so it is
+# safe for both Render health checks and cron-job.org keepalive pings.
+
+services:
+  - type: web
+    name: pulsemesh
+    runtime: node
+    plan: free
+    rootDir: .
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
